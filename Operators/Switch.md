@@ -30,17 +30,35 @@ So you need to take your `temperatures` stream and your `zipCodes` stream and pu
 
 ## The Solution
 
-Use the `switchMap` method on `Observable`:
+You can use `map` to get a stream of temperatures for each zipCode:
 
 ```
-Observable<String> zipCodes =
-    mLocationTracker.currentZipCode();
+Observable<Observable<Temperature>> temperatureStreams = mLocationTracker
+    .currentZipCode()
+    .map(zipCode -> mWeatherService.temperatureStreamForZipCode(zipCode));
+```
 
-Observable<Temperature> myTemperature = zipCodes
-    .switchMap(zipCode -> mWeatherService.temperatureStreamForZipCode(zipCode));
+Then you can use `switchOnNext` to convert that to a single `Observable<Temperature>` stream.
+
+```
+Observable<Observable<Temperature>> temperatureStreams = mLocationTracker
+    .currentZipCode()
+    .map(zipCode -> mWeatherService.temperatureStreamForZipCode(zipCode));
+
+Observable<Temperature> myTemperature = Observable.switchOnNext(temperatureStreams);
 ```
 
 `zipCodes` will start out by emitting the current location, "30312," which will then map to a stream of temperatures for "30312."
 
 When you change locations, `zipCodes` will emit the new location ("30307"), which will call `temperatureStreamForZipCode` to get the temperatures for "30307". 
 `myTemperature` will then *switch* to using the temperatures for "30307," not "30312."
+
+`switchMap` can be used to accomplish the same thing in a more convenient way:
+
+```
+Observable<Temperature> myTemperature = mLocationTracker
+    .currentZipCode()
+    .switchMap(zipCode -> mWeatherService.temperatureStreamForZipCode(zipCode));
+```
+
+`switchMap` is equivalent to calling `map`, then wrapping the result in a call to `switchOnNext`.
