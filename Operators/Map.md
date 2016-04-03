@@ -1,5 +1,7 @@
 # Map
 
+![Map marble diagram](https://raw.githubusercontent.com/wiki/ReactiveX/RxJava/images/rx-operators/map.png)
+
 ## The Problem
 
 Your application needs to pull temperature data from a web service vending JSON payloads.
@@ -87,3 +89,7 @@ Observable<Temperature> temperature = webTemperature
     });
 ```
 
+## Related Tools
+
+* If you are only performing a cast, then you might as well use `cast` instead of `map`.
+* If your `map` turns an `Observable` into an `Observable<Observable>`, then `flatMap` and friends are often the right tool.
