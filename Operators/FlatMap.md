@@ -77,9 +77,70 @@ Observable<Observable<Marker>> markerObservables = regions
 Observable<Marker> markers = Observable.merge(markerObservables);
 ```
 
-When you call `map` and create `markerObservables`, many web service calls may be initiated simultaneously.
-When you merge them together, `merge` will emit each `Marker` as it arrives, no matter which `Observable` it came from in `markerObservables`.
-So `flatMap` may mix all of your `Marker`s together or change their ordering, depending on when those web service calls return.
+And that's what `flatMap` does.
+
+```
+Observable<Region> regions = mRealEstateService
+    .getRegions(lonW, latN, lonE, latS);
+
+Observable<Marker> markers = regions
+    .flatMap(region -> mRealEstateService.getMarkers(region.getId()));
+```
+
+### Ordering
+
+When `getRegions` finishes performing its web service call, it will emit the regions it returns in a specific order.
+
+```
+mRealEstateService
+    .getRegions(lonW, latN, lonE, latS);
+    .flatMap(region -> {
+        Log.i(TAG, "Fetching markers for region: " + region.getName());
+        return mRealEstateService.getMarkers(region.getId())
+    })
+    .subscribe();
+
+====> 
+
+Fetching markers for region: Cabbagetown
+Fetching markers for region: Inman Park
+Fetching markers for region: Little 5 Points
+```
+
+These regions be emitted quickly, or they may be called slowly.
+
+Each call to `getMarkers` may not take the same amount of time, either.
+So the responses may not arrive in the same order as the calls were made.
+
+`flatMap` is very simple: if the responses arrive out of order, it will emit the values out of order.
+
+```
+mRealEstateService
+    .getRegions(lonW, latN, lonE, latS);
+    .flatMap(region -> {
+        Log.i(TAG, "Fetching markers for region: " + region.getName());
+        return mRealEstateService.getMarkers(region.getId())
+    })
+    .subscribe(marker -> {
+        Log.i(TAG, "Returned a marker located in: " + marker.getRegion().getName());
+    });
+
+====>
+
+Fetching markers for region: Cabbagetown
+Fetching markers for region: Inman Park
+Fetching markers for region: Little 5 Points
+Returned a marker located in: Little 5 Points
+Returned a marker located in: Cabbagetown
+Returned a marker located in: Little 5 Points
+Returned a marker located in: Cabbagetown
+Returned a marker located in: Inman Park
+Returned a marker located in: Inman Park
+Returned a marker located in: Little 5 Points
+Returned a marker located in: Inman Park
+```
+
+If you need your values to arrive in the same order as they were requested, use `concatMap` instead.
 
 ## Related Tools
 
