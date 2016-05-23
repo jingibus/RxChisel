@@ -77,6 +77,8 @@ Observable<Observable<Marker>> markerObservables = regions
 Observable<Marker> markers = Observable.merge(markerObservables);
 ```
 
+It's as if you `subscribe`d to each one of the `Observable`s returned by `map` at the same time, and then merged the `Marker`s they returned into a single `Observable` stream.
+
 And that's what `flatMap` does.
 
 ```
