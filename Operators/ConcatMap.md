@@ -73,7 +73,7 @@ Region region = ...;
 
 Observable<Marker> markers = mRealEstateService.getMarkers(region.getId());
 markers
-    .flatMap((Marker marker) -> {
+    .concatMap((Marker marker) -> {
         Log.i(TAG, "Getting details: " + marker.getAddress());
         return mRealEstateService.getMarkerDetails(marker.getId());
     })
